@@ -49,15 +49,24 @@
         <hr style="border-style:dashed;color:#C0C0C0"  SIZE=1/>
         <div style="max-height: 110px;overflow: auto;">
           <el-tag v-for="(item,i) in labels" :key="i" closable :disable-transitions="false" @close="deleteLabel(item)"
-            style="margin:0 2% 1% 0;" effect="plain"  >
+            style="margin:0 2% 1% 0;cursor: pointer;" effect="plain" @click="updateLabel(item)" >
             {{item}}
           </el-tag>
         </div>
       </el-card>
     </div>
-    <div class="right">
+    <div class="right" style="position: relative;">
+      
       <span style="text-align:center;font-size:24px;">消息中心</span>
+      <el-select v-model="isReadType" size="mini" style="position:absolute;right: 5%;top:5%;width: 18%;" 
+                  placeholder="请选择消费类型" @change="getMessage()">
+                  <el-option label="所有" value="1"></el-option>
+                  <el-option label="未读" value="2"></el-option>
+                  <el-option label="已读" value="3"></el-option>
+        </el-select>
       <div style="text-align: left;margin-top: 5%;padding: 0 4%;max-height: 80%;overflow:auto;">
+        <div v-if="message.length<1" style="font-size: 1.4rem;color: rgb(109, 104, 104);text-align: center;
+                      margin: 180px 0;">暂无消息</div>
         <div v-for="item in message" :key="item.id" style="cursor: pointer;" >
           <el-popconfirm
             title="确定删除这条消息吗？"
@@ -89,8 +98,12 @@
         </div>
         
       </div>
-      <div style="font-size:12px;float: left;margin-top: 5%;color:#918c8c;margin-left: 1.5%;">
-        共&nbsp;{{message.length}}&nbsp;条记录</div>
+      
+      <span style="font-size:12px;float: left;margin-top: 5%;color:#918c8c;margin-left: 1.5%;">
+        共&nbsp;{{message.length}}&nbsp;条记录
+        <i class="el-icon-refresh" style="cursor: pointer;" @click="getMessage();showMessage('刷新成功',1)"></i>      
+      </span>
+
     </div>
 
     <el-dialog
@@ -143,6 +156,7 @@ export default {
       iconVisible:false,
       timeVisible:false,
       iconRadio:0,
+      isReadType:'1',
       user: {
         sign:'',
         data:[0,0,0,0],
@@ -298,6 +312,7 @@ export default {
       getMessage(){
         const mydata = {
         	userid:this.userid,
+          type:this.isReadType
       	}
         this.axios({
         	method: 'post',
@@ -387,6 +402,18 @@ export default {
           cancelButtonText: '取消',
           inputValue:this.user.sign,
         }).then(({ value }) => {
+          let l=0;
+					for(let i=0;i<value.length;i++){
+						if(value.charCodeAt(i)>=0&&value.charCodeAt(i)<=128){
+							l+=1;
+						}else{
+							l+=2;
+						}
+					}
+          if(l>40){
+            this.showMessage("个性签名长度必须少于20个汉字！");
+            return;
+          }
           const mydata = {
         	username: this.username,
           sign: value,
@@ -413,6 +440,10 @@ export default {
           confirmButtonText: '保存',
           cancelButtonText: '取消',
         }).then(({ value }) => {
+          if(value.length<6||value.length>12){
+            this.showMessage("密码长度必须在6~12之间");
+            return;
+          }
           const mydata = {
         	username: this.username,
           password: value,
@@ -434,6 +465,44 @@ export default {
             message: '新密码不能和旧密码一致！' 
           });
           }
+				})
+        }).catch(() => {
+          this.showCancel();       
+        });
+      },
+      updateLabel(name){
+        this.$prompt('请输入修改后的标签名：', '提示', {
+          confirmButtonText: '保存',
+          cancelButtonText: '取消',
+        }).then(({ value }) => {
+          let l=0;
+					for(let i=0;i<value.length;i++){
+						if(value.charCodeAt(i)>=0&&value.charCodeAt(i)<=128){
+							l+=1;
+						}else{
+							l+=2;
+						}
+					}
+          if(l>10){
+            this.showMessage("标签长度必须少于5个汉字！");
+            return;
+          }
+          const mydata = {
+        	username: this.username,
+          oldLabel:name,
+          newLabel:value,
+      	}
+        this.axios({
+        	method: 'post',
+        	url: '/api/label/update/',
+          data: Qs.stringify(mydata)
+      	  })
+				.then( res => {
+          this.getAllLabels();
+          this.$message({
+            type: 'success',
+            message: '标签名修改成功！' 
+          });
 				})
         }).catch(() => {
           this.showCancel();       

@@ -1,14 +1,24 @@
 <template>
-    <div style="width:100%;height:100%;" ref="pie"></div>
+  <div style="width:500px;height:500px;">
+    <div style="width:100%;height: 100%;" ref="share"></div>
+    <div v-if="labelData.length<1" style="font-size: 1.4rem;color: rgb(109, 104, 104);">暂无数据</div>
+  </div>
+    <!-- <div>{{username}}.{{date}}.{{labelData}}</div> -->
   </template>
   
   <script>
   import Qs from 'qs';
-  const echarts = require('echarts');
+  import echarts from 'echarts';
+  // // const echarts = require('echarts');
   export default {
-    name: "pie",
+    name: "ReportShare",
     props:{
-
+      username:{
+        type:String,
+      },
+      date:{
+        type:String,
+      }
     },
     data() {
       return {
@@ -21,13 +31,14 @@
       }
     },
     watch: {
-    //   type1(newV,oldV){
-    //     if(newV==0)
-    //       this.getLabels(0,'');
-    //     else{
-    //       this.getLabels(newV,this.months[newV]);
-    //     }
-    //   }
+      date(newV,oldV){
+        this.getLabels();
+        console.log(date);
+      },
+      username(newV,oldV){
+        this.getLabels();
+        console.log(username);
+      }
     },
     computed: {
       options() {
@@ -57,7 +68,7 @@
           series: [
             {
               name: '标签',
-              type: 'pie',
+              type: 'share',
               radius: '55%',
               center: ['50%', '50%'],
               data: this.labelData.sort(function (a, b) { return a.value - b.value; }),
@@ -93,22 +104,21 @@
     },
     methods: {
       initPieChart(){
-        let pie = echarts.init(this.$refs.pie);
-        if ( pie != null && pie!= "" && pie != undefined ) {
-          pie.dispose();
-          pie = echarts.init(this.$refs.pie);
+        let share = echarts.init(this.$refs.share);
+        if ( share != null && share!= "" && share != undefined ) {
+          share.dispose();
+          share = echarts.init(this.$refs.share);
         }
-        pie.setOption(this.options);
+        share.setOption(this.options);
       },
-      getLabels(type,date){
+      getLabels(){
         const mydata = {
-          userid:this.userid,
-          type:type,
-          date:date,
+          username:this.username,
+          date:this.date,
         }
         this.axios({
           method: 'post',
-          url: '/api/label/getLabelForReport/',
+          url: '/api/label/getLabelForShare/',
           data: Qs.stringify(mydata)
         })
         .then(res=>{         
@@ -118,7 +128,7 @@
       },
     },
     mounted() {
-      this.getLabels(0,'');
+      this.initPieChart();
     }
   }
   </script>

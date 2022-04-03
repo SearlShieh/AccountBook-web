@@ -1,5 +1,9 @@
 <template>
-  <div style="width:100%;height:100%;" ref="pie"></div>
+  <div style="width:100%;height:100%;position: relative;">
+    <div style="width:100%;height:100%;" ref="pie"></div>
+    <div v-if="labelData.length<1" style="position: absolute;left:50%;top:50%;transform: translate(-50%,-50%);
+      font-size: 1.4rem;color: rgb(109, 104, 104);">暂无数据</div>
+  </div>
 </template>
 
 <script>
@@ -53,14 +57,6 @@ export default {
           trigger: 'item'
         },
 
-        visualMap: {
-          show: false,
-          min: 80,
-          max: 600,
-          inRange: {
-            colorLightness: [0, 1]
-          }
-        },
         series: [
           {
             name: '标签',
@@ -69,24 +65,6 @@ export default {
             center: ['50%', '50%'],
             data: this.labelData.sort(function (a, b) { return a.value - b.value; }),
             roseType: 'radius',
-            label: {
-              color: 'black',  // rgba(255, 255, 255, 0.3)
-              font_size: 15  //not working
-            },
-            labelLine: {
-              lineStyle: {
-                color: 'black'  // rgba(255, 255, 255, 0.3)
-              },
-              smooth: 0.2,
-              length: 10,
-              length2: 20
-            },
-            itemStyle: {
-              color: '#c23531',
-              shadowBlur: 200,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
-            },
-
             animationType: 'scale',
             animationEasing: 'elasticOut',
             animationDelay: function (idx) {

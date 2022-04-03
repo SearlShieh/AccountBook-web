@@ -138,6 +138,22 @@ import Qs from 'qs';
 			register(){
 				const that = this;
 				if(that.form.username != ""   && that.form.userpwd != ""&&that.form.userpwdtwo!=""){
+					let l=0;
+					for(let i=0;i<that.form.username.length;i++){
+						if(that.form.username.charCodeAt(i)>=0&&that.form.username.charCodeAt(i)<=128){
+							l+=1;
+						}else{
+							l+=2;
+						}
+					}
+					if(l>12){
+						this.$message('用户名不能多于6个汉字！');
+						return;
+					}
+					if(that.form.userpwd.length<6||that.form.userpwd.length>12){
+						this.$message('密码长度必须在6~12之间！');
+						return;
+					}
 					if(that.form.userpwd==that.form.userpwdtwo){
 						const mydata = {
         				username: that.form.username,

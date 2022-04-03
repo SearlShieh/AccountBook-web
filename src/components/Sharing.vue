@@ -8,7 +8,10 @@
         <el-button type="primary" size="small" style="float:right;margin-left: 1.5%;" @click="typeIndex=1;getAllShares(1,0)"
           v-if="typeIndex!=1">查看所有</el-button>
           <div style="font-size:12px;float: right;margin-top: 2.5%;color:#918c8c;margin-right: 2%;">
-            共&nbsp;{{shares.length}}&nbsp;条结果</div>
+            共&nbsp;{{shares.length}}&nbsp;条结果
+            <i class="el-icon-refresh" style="cursor: pointer;" @click="getAllShares(typeIndex,0);showMessage('刷新成功',1)"
+              v-if="typeIndex!=3"></i>
+          </div>
         <div style="text-align:left" v-if="typeIndex==1||typeIndex==3">分享动态</div>
         <div style="text-align:left" v-if="typeIndex==4">我的点赞</div>
         <div style="text-align:left" v-if="typeIndex==2">我的分享动态</div>
@@ -27,7 +30,8 @@
             <el-button type="primary" icon="el-icon-star-on" style="padding: 5px 10px;" @click="update(item.id,item.likes,1,-1)"
                 v-if="item.isLike==1">{{item.likes}}</el-button>
             <div style="float: left;font-size:.9rem;margin-left: 11%;margin-bottom: 8px;">{{item.content}}</div>
-            <el-card shadow="hover" style="width: 86%;margin-left: 10%;cursor: pointer;background:rgba(255, 255, 255, 0.5);padding: 0;">
+            <el-card shadow="hover" style="width: 86%;margin-left: 10%;cursor: pointer;background:rgba(255, 255, 255, 0.5);padding: 0;"
+              v-if="item.type==1">
               <div @click="showBookDetail(item.id,item.views,item.book.id)">
                 <el-tag size="mini" style="padding:0px 4px;float: right;" effect="plain" type="info">
                   最后修改时间：{{item.book.lastdate}}
@@ -40,6 +44,11 @@
                   备注：{{item.book.remark}}
                 </div>
               </div>
+            </el-card>
+            <el-card shadow="hover" style="width: 86%;margin-left: 10%;cursor: pointer;background:rgba(255, 255, 255, 0.5);padding: 0;"
+              v-else >    
+                <div style="font-size:1.2rem;" @click="showReportDetail(item.id,item.views,item.reportdate,item.user.username)">
+                  {{item.reportdate.substring(0,4)}}年{{item.reportdate.substring(5,7)}}月份报告</div>  
             </el-card>
             <el-tag size="mini" style="padding:0px 4px;float: right;margin-right: 3.6%;margin-top: 2%;" effect="plain" >
                时间：{{item.date}}
@@ -118,18 +127,41 @@
           </el-card>
         </div>
       </el-dialog>
+      <el-dialog
+        :visible.sync="reportDetailVisible"
+        width="34%"
+        center>
+        <span style="font-size:1.2rem;text-align: left;" >{{report.date.substring(0,4)}}年{{report.date.substring(5,7)}}月份报告</span>  
+        <el-tag size="small" style="margin-left: 5%;margin-top: -5px" >用户：{{report.username}}</el-tag>
+        <div v-if="labelData.length<1" style="font-size: 1.4rem;color: rgb(109, 104, 104);text-align: center;
+          position: relative;top:20vh;">暂无数据</div>
+        <div style="width: 100%;height: 300px;" ref="pies"></div>
+        
+      </el-dialog>
+      
   </div>
 </template>
 
 <script>
 import Qs from 'qs';
+const echarts = require('echarts');
 export default {
   data() {
     return {
       userid:sessionStorage.getItem('userid'),
       bookDetailVisible:false,
+      reportDetailVisible:false,
       typeIndex:1,
-    
+      report:{
+        username:'',
+        date:'',
+      },
+      labelData:[
+          {
+            value:0,
+            name:'',
+          }
+        ],
       shares:[
         {
           id:1,
@@ -145,19 +177,21 @@ export default {
             date:'',
             lastdate:'',
           },
+          reportdate:'',
           content:"",
           date:'',
           likes:0,
           views:0,
           isLike:0,
           isMe:0,
+          type:0,
         },
       ],
       bookDetail:{
-        name:'欣欣的账本',
-        remark:'今天天气真好天气真好今天天气真好天气',
-        date:'2022-03-5 15:16:20',
-        lastdate:'2022-03-12 16:20:30',
+        name:'',
+        remark:'',
+        date:'',
+        lastdate:'',
         records:[
           {
             id:0,
@@ -188,11 +222,39 @@ export default {
       
     }
   },
+  computed: {
+      options() {
+        let option={
+          tooltip: {
+            trigger: 'item'
+          },
+          series: [
+            {
+              name: '标签',
+              type: 'pie',
+              radius: '55%',
+              center: ['50%', '50%'],
+              data: this.labelData.sort(function (a, b) { return a.value - b.value; }),
+              roseType: 'radius',
+              animationType: 'scale',
+              animationEasing: 'elasticOut',
+              animationDelay: function (idx) {
+                return Math.random() * 200;
+              }
+            }
+          ]
+        };
+        return option;
+      },
+    },
   mounted(){
 			this.getAllShares(1,0);
       this.getAllRanks();
 	},
   methods:{
+    getComName(index) {
+      return comNameArray[index];
+    },
     showMessage(str,type=2){
       if(type==1){
         this.$message({
@@ -251,6 +313,31 @@ export default {
           this.bookDetailVisible=true;
           this.update(id,num,2,1);
 			})
+    },
+    showReportDetail(id,num,date,username){
+      if(this.report.username==username&&this.report.date==date){
+        this.reportDetailVisible=true;
+        return;
+      }
+      const mydata = {
+          username:username,
+          date:date,
+        }
+        this.axios({
+          method: 'post',
+          url: '/api/label/getLabelForShare/',
+          data: Qs.stringify(mydata)
+        })
+      .then(res=>{         
+          this.labelData=res.data;
+          this.report.username=username;
+          this.report.date=date;
+          this.reportDetailVisible=true;
+          setTimeout(()=>{
+            this.initPieChart();
+          },500)
+          this.update(id,num,2,1);
+      })
     },
     update(id,num,type,isAdd){
       const mydata = {
@@ -321,8 +408,15 @@ export default {
           this.showMessage("取消删除！");    
         });
       },
+      initPieChart(){
+        let pies = echarts.init(this.$refs.pies);
+        if ( pies != null && pies!= "" && pies != undefined ) {
+          pies.dispose();
+          pies = echarts.init(this.$refs.pies);
+        }
+        pies.setOption(this.options);
+      },
   }
-  
 }
 </script>
 

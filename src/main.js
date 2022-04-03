@@ -12,7 +12,8 @@ import VueAxios from 'vue-axios'
 import Qs from 'qs'
 import vuescroll from "vuescroll";//引入vuescroll
 import "vuescroll/dist/vuescroll.css";//引入vuescroll样式
-import echarts from 'echarts'
+// import echarts from 'echarts'
+import * as echarts from 'echarts';
 Vue.prototype.$echarts = echarts
 Vue.use(vuescroll);//使用
 

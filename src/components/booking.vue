@@ -40,6 +40,8 @@
                 <!-- 账单列表 -->
                 <!-- <vue-scroll :ops="ops" style="width:98%;max-height:400px;margin:0% 1% 0 1%">  -->
                   <div class="bookapp2">
+                    <div v-if="mybook.length<1" style="font-size: 1.4rem;color: rgb(109, 104, 104);text-align: center;
+                    margin: 20vh 0;">暂无账单记录</div>
                     <div  v-for="item in mybook" :key="item.recordId" class="bill-box">    
                       <hr style="border-style:dashed;color:#C0C0C0;margin:0px 0 10px 0 ; clear:both"  SIZE=1/>
                       <div>
@@ -88,7 +90,9 @@
                   </div>
                 <!-- </vue-scroll> -->
                 <div style="font-size:12px;float: left;margin-top: 5%;color:#918c8c;margin-left: 1.5%;">
-                  共&nbsp;{{mybook.length}}&nbsp;条记录</div>
+                  共&nbsp;{{mybook.length}}&nbsp;条记录
+                  <i class="el-icon-refresh" style="cursor: pointer;" @click="getallBook();showMessage('刷新成功',1)"></i>
+                </div>
     </el-card>
 
     <el-card class="box-card2" >

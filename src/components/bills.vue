@@ -4,30 +4,38 @@
       <div>添加</div>
       <div>账本</div>
     </div>
-    <div class="invite-btn" @click="inviteVisible=true">
+    <div class="invite-btn" @click="showInviteVisible(1)">
       <div>邀请</div>
       <div>记录</div>
     </div>
-      <div class="invite-btn invite-btn2" @click="invitedVisible=true">
+      <div class="invite-btn invite-btn2" @click="showInviteVisible(2)">
         <div v-if="invitedMessageCount<1">受邀</div>
         <el-badge :value="invitedMessageCount" v-else><div>受邀</div></el-badge>     
         <div>消息</div>
       </div>
     
     <el-card class="box-card" style="overflow: hidden;text-align:left" >
+      <div v-if="books.length<1" style="font-size: 1.5rem;color: rgb(109, 104, 104);text-align: center;
+        margin: 30vh 0;">暂无数据</div>
       <el-carousel indicator-position="none" arrow="hover" :autoplay="false" width="500px" height="520px"
-         @change="getRecordByBook">
+         @change="getRecordByBook" ref="carousel" v-else>
         <el-carousel-item v-for="item in books" :key="item.id">
           <!-- 账本信息 -->
           <div style="margin-bottom:1%;text-align:left;margin-left: 1%;">
             <span style="text-align:left;font-size:1.5rem;display: inline-block;max-width: 47%;
-              overflow: hidden;white-space: nowrap;text-overflow: ellipsis;">{{item.name}}</span>
+              overflow: hidden;white-space: nowrap;text-overflow: ellipsis;" @click="setActiveItem">{{item.name}}</span>
             <el-button type="info" size="small" circle v-if="item.username==username"
               style="padding:4px 4px 4px 4px;position:relative;top:-9px;">{{item.isPrivate?"私":"共"}}
             </el-button>
             <el-button type="info" size="small" circle v-else
               style="padding:4px 4px 4px 4px;position:relative;top:-9px;">享
             </el-button>
+            <el-tooltip effect="light" content="切换账本" placement="bottom-start">
+              <el-button type="warning" size="small" circle style="padding:4px;position: relative;top:-10px" 
+                @click="bookChangeVisible=true">
+                <i class="el-icon-sort"></i>
+              </el-button>
+            </el-tooltip>
             
             <el-button-group style="float: right;position: relative;right: 1%;top:5px" v-if="item.isMonthly==0&&item.username==username">
               <el-button type="danger" size="mini"  icon="el-icon-edit" @click="updateBook(item.id)">编辑</el-button>
@@ -80,6 +88,8 @@
 
           <!-- 账单列表 -->
                   <div class="bookapp2">
+                    <div v-if="mybook.length<1" style="font-size: 1.4rem;color: rgb(109, 104, 104);text-align: center;
+                      margin: 20vh 0;">暂无账单记录</div>
                     <div  v-for="item in mybook" :key="item.recordId" class="bill-box">
                       <div>
                       <hr style="border-style:dashed;color:#C0C0C0;margin:0px 0 10px 0 ; clear:both"  SIZE=1/>
@@ -136,7 +146,9 @@
                     <div>账单</div>
                   </div>
                   <div style="font-size:12px;float: left;margin-top: 5%;color:#918c8c;margin-left: 1.5%;">
-                    共&nbsp;{{mybook.length}}&nbsp;条记录</div>
+                    共&nbsp;{{mybook.length}}&nbsp;条记录
+                    <i class="el-icon-refresh" style="cursor: pointer;" @click="getRecordByBook(bookIndex);showMessage('刷新成功',1)"></i>
+                  </div>
         </el-carousel-item>
         
       </el-carousel>
@@ -394,6 +406,36 @@
         <el-input v-model="addInviteName" size="small" suffix-icon="el-icon-edit" maxlength="10" show-word-limit
             style="width:300px;margin-left: 10px;" placeholder="请输入用户昵称"></el-input>
     </el-dialog>
+    <el-dialog
+      title="选择账本"
+      :visible.sync="bookChangeVisible"
+      width="40%"
+      center>
+      <div style="font-size:1.0rem;">月账本</div>  
+      <hr style="border-style:dashed;color:#C0C0C0" SIZE=1 />
+      <div style="max-height:80px;overflow: auto;">
+        <el-tag size='small' style="margin:5px 5px 0 0;cursor: pointer;" v-for="(item,i) in books" :key="item.id"
+          v-if="item.isMonthly==1" @click="setActiveItem(i);bookChangeVisible=false">{{item.name}}</el-tag>
+      </div>
+      <div style="font-size:1.0rem;margin-top: 14px;">私人账本</div>  
+      <hr style="border-style:dashed;color:#C0C0C0" SIZE=1 />
+      <div style="max-height:100px;overflow: auto;">
+        <el-tag size='small' style="margin:5px 5px 0 0;cursor: pointer;" v-for="(item,i) in books" :key="item.id"
+        v-if="item.isMonthly==0&&item.isPrivate==1" @click="setActiveItem(i);bookChangeVisible=false">{{item.name}}</el-tag>
+      </div>
+      <div style="font-size:1.0rem;margin-top: 14px;">共享账本</div>  
+      <hr style="border-style:dashed;color:#C0C0C0" SIZE=1 />
+      <div style="max-height:60px;overflow: auto;">
+        <el-tag size='small' style="margin:5px 5px 0 0;cursor: pointer;" v-for="(item,i) in books" :key="item.id"
+        v-if="item.isPrivate==0&&item.username==username" @click="setActiveItem(i);bookChangeVisible=false">{{item.name}}</el-tag>
+      </div>
+      <div style="font-size:1.0rem;margin-top: 14px;">协作账本</div>  
+      <hr style="border-style:dashed;color:#C0C0C0" SIZE=1 />
+      <div style="max-height:60px;overflow: auto;">
+        <el-tag size='small' style="margin:5px 5px 0 0;cursor: pointer;" v-for="(item,i) in books" :key="item.id"
+        v-if="item.isPrivate==0&&item.username!=username" @click="setActiveItem(i);bookChangeVisible=false">{{item.name}}</el-tag>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -419,6 +461,7 @@ export default {
         invitedVisible:false,
         bookInviteVisible:false,
         addInviteVisible:false,
+        bookChangeVisible:false,
         bookInviteName:'',
         addInviteName:'',
         invitedRecord:[
@@ -771,7 +814,9 @@ export default {
           }
           else{
             this.updateInput();
-            this.getAllBooks();
+            setTimeout(()=>{
+              this.getAllBooks();
+            },500) 
             this.showMessage('添加成功！',1);
           }
 				})
@@ -959,6 +1004,27 @@ export default {
         else{
           this.showMessage("请输入浮点类型的金额数字！");
         }
+      },
+      showInviteVisible(val){
+        if(val==1){
+          if(this.inviteRecord.length<1){
+            this.showMessage("暂无邀请记录！");
+          }
+          else{
+            this.inviteVisible=true;
+          }
+        }
+        else{
+          if(this.invitedRecord.length<1){
+            this.showMessage("暂无受邀记录！");
+          }
+          else{
+            this.invitedVisible=true;
+          }
+        }
+      },
+      setActiveItem(index){
+        this.$refs.carousel.setActiveItem(index);
       },
       updateBook(id){
         this.isShowUpdateBook=id;
