@@ -6,7 +6,7 @@
       </svg>
     </div>
     <div style="width:89%;height:100%;background:transparent;">
-      <component :is=getComName(index) :type1="selectType" :type2="radioType"></component>
+      <component :is=getComName(index) :type1="selectType" :type2="radioType" :type3="radioType2"></component>
     </div>
     <div class="button-wrapper-right">
       <svg @click="index=(index+1)%2" t="1618408292224" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="756" width="50" height="50">
@@ -21,11 +21,15 @@
         :value="i">
       </el-option>
     </el-select>
+    <div style="position: absolute;right: 2%;top:10%" v-if="index!=0">
+      &nbsp;&nbsp;&nbsp;&nbsp;<el-radio v-model="radioType2" label="0">按消费次数</el-radio><br/>
+      <el-radio v-model="radioType2" label="1">按消费金额</el-radio>
+    </div>
     <div style="position: absolute;right: 3%;top:2%" size="small" v-else>
       <el-radio v-model="radioType" label="0">一周的消费趋势</el-radio>
       <el-radio v-model="radioType" label="1">半年的消费趋势</el-radio>
     </div>
-    <el-tooltip effect="light" content="分享报告" placement="bottom-start" v-if="index!=0&&selectType!=0">
+    <el-tooltip effect="light" content="分享报告" placement="bottom-start" v-if="index!=0&&selectType!=0&&radioType2!='1'">
       <el-button type="success" size="small" circle style="position: absolute;right: 25%;top:3%;" @click="shareReport">
         <i class="el-icon-share"></i>
       </el-button>
@@ -103,6 +107,7 @@ export default {
       index: 0,
       selectType:0,
       radioType:'0',
+      radioType2:'0',
       months:['所有月份','','','','','',''],
       monthsTwo:['','','','','',''],
       report:{

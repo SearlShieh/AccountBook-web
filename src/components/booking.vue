@@ -6,7 +6,7 @@
     </div>
     <el-card class="box-card" style="overflow: hidden;text-align:left" >
       <div style="margin-bottom:10px;text-align:center">
-        <span style="text-align:center;font-size:24px;">近期账单记录</span>
+        <span style="text-align:center;font-size:24px;" @click="stepVisible=true">近期账单记录</span>
       </div>
 
                 <!-- 排序选择框 -->
@@ -26,7 +26,6 @@
                   <el-option label="支出" value="2"></el-option>
                   <el-option label="收入" value="3"></el-option>
                 </el-select>
-
                   <el-date-picker v-model="dateSelect" align="right" type="date" size="mini" placeholder="选择日期" 
                     :picker-options="pickerOptions" value-format="yyyy-MM-dd" @change="getallBook()" 
                     style="float: right;margin-top: 1%;">
@@ -58,14 +57,18 @@
                           </span>
                         </el-tag>
                         
-                        <div style="font-size:12px;color:#686868;float: right;">
+                        <div style="font-size:12px;color:#686868;float: right;" v-if="dateSelect==''">
+                          消费日期：{{item.date}}
+                        </div>
+                        <div style="font-size:12px;color:#fd6767;float: right;" v-else>
                           消费日期：{{item.date}}
                         </div>
                       </div>
                       <div style="width:98%;overflow: auto;height: 30px;margin-top: 0;position: relative;top:-6px">
-                        <el-tag size='small' style="margin:5px 5px 0 0" v-for="item2 in item.books" :key="item2">{{item2}}</el-tag>
+                        <el-tag :type="bookTypeForName==item2? 'danger':'primary' " size='small' style="margin:5px 5px 0 0" v-for="item2 in item.books" 
+                          :key="item2">{{item2}}</el-tag>
                       </div>
-                      <div style="font-size:12px;color:#686868;" v-if="item.remarks">
+                      <div style="font-size:12px;color:#e38b8b;" v-if="item.remarks">
                         备注：{{item.remarks}}
                       </div>
                       <el-popconfirm
@@ -79,7 +82,7 @@
                         </el-popconfirm>
                         <el-button  size="mini" style="padding:4px 4px 4px 4px;position:relative;top:-7px;float: right;" 
                             @click="changeToSomeBill(item.recordId)" v-if="item.isprivate==1">编辑</el-button>
-                      <div style="font-size:12px;margin-bottom: 5px; color:#686868;">
+                      <div style="font-size:12px;margin-bottom: 5px; color:#8b8b8b;">
                         最后修改时间：{{item.bookDate}}
                       </div>
 
@@ -89,6 +92,9 @@
                   </div>
                   </div>
                 <!-- </vue-scroll> -->
+                <div style="font-size:12px;float: right;margin-top: 5%;color:#806d6d;width: 50%;text-align:right;">
+                  总计消费<span style="font-weight: bold;margin: 0 1%;color: #e45151;font-size: 14px;">{{totalMoney}}</span>元
+                </div>
                 <div style="font-size:12px;float: left;margin-top: 5%;color:#918c8c;margin-left: 1.5%;">
                   共&nbsp;{{mybook.length}}&nbsp;条记录
                   <i class="el-icon-refresh" style="cursor: pointer;" @click="getallBook();showMessage('刷新成功',1)"></i>
@@ -173,8 +179,10 @@
         </el-form-item>
 <hr style="border-style:dashed;color:#C0C0C0;position:relative;top:15px;"  SIZE=1/>
       </el-form>
-      </div> </vue-scroll><span style="position:relative;top:20px">{{this.rid}}
-      <!-- <span>{{form.money}}、{{form.typeRadio}}、{{form.bookLabel}}、{{form.bookData}}、{{form.remark}}、{{form.bookTags}}</span> -->
+      </div> </vue-scroll><span style="position:relative;top:20px">
+      <div style="font-size:12px;color:#e45151;margin-top: -5%;margin-bottom: 2%;" v-if="isShowAddRecord==0">
+          今日已消费&nbsp;<span style="font-weight: bold;font-size: 14px;">{{dayMoney}}</span>&nbsp;元
+      </div>
       <el-tooltip effect="light" content="添加记录" placement="bottom-start" v-if="isShowAddRecord==0">
         <el-button type="primary" size="small" circle  @click="addBook">
           <i class="el-icon-check"></i>
@@ -192,8 +200,66 @@
       </el-tooltip>
       </span>
       </el-card>
-      
+
+      <div class="step-box" v-if="step>0">
+        <div id="mainapp" style="background: transparent;padding: 3%;border: none;position: relative;">
+          
+          <div style="flex: 1;border: 1px solid pink;margin: 1% 2% 2.5% 2.5%;position: relative;color: pink;" 
+          v-bind:style="{'visibility': step==6?'visible':'hidden'}">
+            <div style="font-size: 1.5rem;font-weight: bold;position: absolute;left:4%;top:24%;white-space: nowrap;">
+              <i class="el-icon-info" style="margin-right: 2%;"></i>在这里可以查看和筛选账单
+              <br><el-button type="info" size="danger" style="margin-top: 6%;" plain @click="updateStep(2,2)">去账本专区看看</el-button>
+              <el-popconfirm
+              confirm-button-text='本次跳过，下次再弹出'
+                   cancel-button-text='忽略，以后不再弹出'
+                   title="请选择跳过方式："
+                   @confirm="updateStep(2,0)"
+                   @cancel="updateStep(0,0)"
+                   icon-color="pink"
+                  >
+              <el-button type="success" slot="reference" style="margin-top: 8%;margin-left: 5%;" plain  size="mini" >跳过</el-button>
+            </el-popconfirm>
+            </div>
+          </div>
+          <div style="flex: 1;border: 1px solid pink;;margin: 1% 2.5% 2.5% 1.5%;color: pink;position: relative;"
+            v-bind:style="{'visibility': step!=6? 'visible':'hidden' }">
+            <div style="font-size: 1.5rem;font-weight: bold;position: absolute;right: -12%;top:4%;white-space: nowrap;">
+              <i class="el-icon-info" style="margin-right: 2%;"></i>在这里可以记录你的账单
+              <br/><el-button type="danger" style="margin-top: 8%;" plain v-if="step==1" @click="changeStep(2)">开始记账之旅</el-button>
+              <el-popconfirm
+                     confirm-button-text='本次跳过，下次再弹出'
+                          cancel-button-text='忽略，以后不再弹出'
+                          title="请选择跳过方式："
+                          @confirm="updateStep(1,0)"
+                          @cancel="updateStep(0,0)"
+                          icon-color="pink"
+                          v-if="step==1"
+                    >
+                <el-button type="success" slot="reference" style="margin-top: 8%;margin-left: 5%;" plain  size="mini" >跳过</el-button>
+              </el-popconfirm>
+              
+            </div>
+            <div style="font-size: 1.2rem;position: absolute;left:30%;top:15%;white-space: nowrap;" v-if="step==2">
+              <i class="el-icon-back" style="margin-right: 2%;"></i>输入浮点数的金额，如1.99
+              <br/><el-button type="danger" size="mini" style="margin-top: 6%;" plain @click="changeStep(3)">下一步</el-button>
+            </div>
+            <div style="font-size: 1.2rem;position: absolute;left:30%;top:48%;white-space: nowrap;" v-if="step==3">
+              <i class="el-icon-back" style="margin-right: 2%;"></i>这里可以选择标签或添加新标签，<br/>标签名限制5个汉字
+              <br/><el-button type="danger" size="mini" style="margin-top: 6%;" plain @click="changeStep(4)">下一步</el-button>
+            </div>
+            <div style="font-size: 1.2rem;position: absolute;left:30%;top:60%;white-space: nowrap;" v-if="step==4">
+              <i class="el-icon-back" style="margin-right: 2%;"></i>在这里只能添加至自己创建的账本，<br/>在这不能添加至协作账本
+              <br/><el-button type="danger" size="mini" style="margin-top: 6%;" plain @click="changeStep(5)">下一步</el-button>
+            </div>
+            <div style="font-size: 1.2rem;position: absolute;left:30%;top:72%;white-space: nowrap;" v-if="step==5">
+              <i class="el-icon-back" style="margin-right: 2%;"></i>输入备注，长度限制在18个字符，<br/>可不填
+              <br/><el-button type="danger" size="mini" style="margin-top: 6%;" plain @click="changeStep(6)">下一步</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
   </div>
+  
 </template>
 
 <script>
@@ -201,11 +267,13 @@ import Qs from 'qs';
 export default {
   data() {
       return {
+        userid:0,
         sortType:'1',  //排序方式
         isIncomeType:'1', //显示收入还是支出
         labelType:'全部',
         labels:[''],
         bookType:'0',
+        step:0,
         books:[
           {
             name:'',
@@ -215,6 +283,7 @@ export default {
         isShowAddRecord:0,
         visible:false,
         dateSelect:'',
+        dayMoney:0,
         mybook:[
           {
             money:0, //金额
@@ -292,13 +361,38 @@ export default {
 
       }
     },
+    computed: {
+        totalMoney: function () {
+            let money=0;
+            for(let i=0;i<this.mybook.length;i++){
+              if(this.mybook[i].isIncome=="支"){
+                money+=this.mybook[i].money;
+              }
+            }
+            return money.toFixed(2);
+        },
+        bookTypeForName:function(){
+          if(this.bookType!='0'){
+            for(let i=0;i<this.books.length;i++){
+              if(this.books[i].id==this.bookType){
+                return this.books[i].name;
+              }
+            }
+          }else{
+            return '';
+          }
+        }
+    },
     mounted(){
 			this.getAllInfo();//在html加载完成后进行，相当于在页面上同步显示后端数据
       this.getallBook();
+      this.getByDay();
 		},
 
     methods: {
       getAllInfo(){
+        this.userid=sessionStorage.getItem('userid')*1;
+        this.step=sessionStorage.getItem('userstep')==1? 1:0;
         //获取当前日期
         let year = new Date().getFullYear();
         let month =new Date().getMonth() + 1 < 10? "0" + (new Date().getMonth() + 1): new Date().getMonth() + 1;
@@ -338,6 +432,20 @@ export default {
       	})
 				.then( res => {
             this.books=res.data;
+				})
+        
+      },
+      getByDay(){
+        const mydata = {
+        	userid:this.userid
+      	}
+        this.axios({
+        	method: 'post',
+        	url: '/api/record/getByDay/',
+          data: Qs.stringify(mydata)
+      	  })
+				.then( res => {
+          this.dayMoney=res.data;
 				})
       },
     showMessage(str,type=2){
@@ -395,6 +503,7 @@ export default {
               for(let k=0;k<showBooks.length;k++){
                 if(showBooks[k]==this.form.booksTags[j]){
                   this.form.booksTags.splice(j,1);
+                  j--;
                   continue;
                 }
               }
@@ -428,9 +537,10 @@ export default {
 
       addBook(){
         let regs=/^(\d+)(\.\d+)?$/;
+        
         if(this.form.money&&regs.test(this.form.money)){
           const mydata = {
-        	  userid: sessionStorage.getItem('userid')*1,
+        	  userid: this.userid,
             money: this.form.money+'',//金额    
             isincome: this.form.typeRadio,  //支出/收入
             date:this.form.bookData+'', //日期
@@ -439,7 +549,7 @@ export default {
             books: this.form.bookTags+'',//已添加的自定义账本集
             isprivate:1,
       	  }
-          
+          console.log(mydata);
           this.axios({
             method: 'post',
         	  url: '/api/record/addRecord/',
@@ -448,6 +558,8 @@ export default {
 				  .then( res => {
               this.showMessage("添加成功！",1);
               this.updateInput();
+              this.getByDay();
+              this.getallBook();
 				  })
           
         }
@@ -477,6 +589,7 @@ export default {
       	  })
 				  .then( res => {
               this.getallBook();
+              this.getByDay();
               this.showMessage("修改成功！",1);
 				  })
           
@@ -518,7 +631,8 @@ export default {
 
       deleteRecord(recordId){
         const mydata = {
-        	recordId: recordId
+        	recordId: recordId,
+          bookId:0,
       	}
         this.axios({
         	method: 'post',
@@ -532,6 +646,7 @@ export default {
               break;
             }
           }
+          this.getByDay();
           this.showMessage("删除成功！",1);
 				})
       },
@@ -580,6 +695,27 @@ export default {
         }
         this.inputVisible = false;
         this.inputValue = '';
+      },
+
+      changeStep(val){
+        this.step=val;
+      },
+
+      updateStep(val,val2){
+        this.changeStep(0);
+        const mydata = {
+        	  username: this.username,
+            step:val
+      	}
+        this.axios({
+        	    method: 'post',
+        	    url: '/api/user/update/step/',
+              data: Qs.stringify(mydata)
+      	})
+        sessionStorage.setItem('userstep',val2);
+        if(val2==2){
+          this.$emit("changeComponent1Data", "bills",true);
+        }
       },
 
       handleSelectConfirm() {
@@ -683,10 +819,11 @@ export default {
     background: white;
       border: 10px solid rgba(255,255,255,.5);
       background-clip: padding-box;
-      position: relative;
+
       display: flex;
     justify-content: center;
     align-content: center;
+    position: relative;
   }
   ::-webkit-scrollbar { display: none; }
   .el-form-item{
@@ -708,7 +845,7 @@ export default {
   width: 8%;
   height: 13.4%;
   position: absolute;
-  bottom: 15%;
+  bottom: 7.5%;
   z-index: 1;
   font-size: 1.2rem;
   display: flex;
@@ -717,5 +854,15 @@ export default {
   flex-direction: column;
   color: pink;
   cursor: pointer;
+}
+
+.step-box{
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  z-index: 2;
 }
 </style>

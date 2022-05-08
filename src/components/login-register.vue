@@ -115,10 +115,10 @@ import Qs from 'qs';
         				data: Qs.stringify(mydata)
       				})
 					.then( res => {
-						if(res.data=="1"){
+						if(res.data.code=="-1"){
 							this.$message.error('密码错误！');
 						}
-						else if(res.data=="0"){
+						else if(res.data.code=="0"){
 							this.$message.error('用户名不存在！');
 						}
 						else{
@@ -127,8 +127,13 @@ import Qs from 'qs';
           					type: 'success'
         					});
 							sessionStorage.setItem('username',that.form.username);
-							sessionStorage.setItem('userid',res.data);
-							this.$emit("changeComponent1Data", "booking",true);
+							sessionStorage.setItem('userid',res.data.code);
+							sessionStorage.setItem('userstep',res.data.step);
+							if(res.data.step==2)
+								this.$emit("changeComponent1Data", "bills",true);
+							else{
+								this.$emit("changeComponent1Data", "booking",true);
+							}	
 						}
 					})
 				} else{

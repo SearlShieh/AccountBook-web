@@ -17,6 +17,9 @@ export default {
     },
     type2:{
       type:String,
+    },
+    type3:{
+      type:String,
     }
   },
   data() {
@@ -33,10 +36,19 @@ export default {
   },
   watch: {
     type1(newV,oldV){
+      console.log(newV);
       if(newV==0)
-        this.getLabels(0,'');
+        this.getLabels(0,'',this.type3);
       else{
-        this.getLabels(newV,this.months[newV]);
+        this.getLabels(newV,this.months[newV],this.type3);
+      }
+    },
+    type3(newV,oldV){
+      console.log(newV);
+      if(this.type1==0)
+        this.getLabels(0,'',newV);
+      else{
+        this.getLabels(this.type1,this.months[this.type1],newV);
       }
     }
   },
@@ -85,11 +97,12 @@ export default {
       }
       pie.setOption(this.options);
     },
-    getLabels(type,date){
+    getLabels(type,date,radio){
       const mydata = {
         userid:this.userid,
         type:type,
         date:date,
+        radio:radio
       }
       this.axios({
         method: 'post',
@@ -122,7 +135,7 @@ export default {
     }
   },
   mounted() {
-    this.getLabels(0,'');
+    this.getLabels(0,'',this.type3);
     this.getMonths();
   }
 }

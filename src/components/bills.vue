@@ -1,6 +1,6 @@
 <template>
   <div id="mainapp">
-    <div class="add-btn" v-if="isShowAddBook!=0||isShowUpdateBook!=0" @click="isShowAddBook=0;isShowUpdateBook=0">
+    <div class="add-btn" v-if="isShowAddBook!=0||isShowUpdateBook!=0" @click="isShowAddBook=0;isShowUpdateBook=0;updateInput()">
       <div>添加</div>
       <div>账本</div>
     </div>
@@ -111,7 +111,8 @@
                         </div>
                       </div>
                       <div style="width:98%;overflow: auto;height: 30px;margin-top: 0;position: relative;top:-6px">
-                        <el-tag size='small' style="margin:5px 5px 0 0" v-for="item2 in item.books" :key="item2">{{item2}}</el-tag>
+                        <el-tag size='small' style="margin:5px 5px 0 0;cursor: pointer;" v-for="item2 in item.books" :key="item2"
+                        @click="setActiveItem2(item2)">{{item2}}</el-tag>
                       </div>
                       <div style="font-size:12px;color:#686868;" v-if="item.remarks">
                         备注：{{item.remarks}}
@@ -138,7 +139,10 @@
                     </div>
                   </div>
                   </div>
-                  <div style="float: right;width: 10%;height: 8%;display: flex;justify-content: center;align-items: center;
+                  <div style="font-size:12px;float: right;margin-top: 5%;color:#918c8c;width: 50%;text-align:right;">
+                    总计消费<span style="font-weight: bold;margin: 0 1%;color: #7e7a7a;font-size: 14px;">{{totalMoney}}</span>元
+                  </div>
+                  <div style="float:right;width: 10%;height: 8%;display: flex;justify-content: center;align-items: center;
                     flex-direction: column;font-size: .8rem;color: pink;
                     border: 1px solid pink;background: #ffffff;border-radius: 100%;cursor: pointer;"
                     @click="showAddRecord">
@@ -289,7 +293,7 @@
         </el-form-item>
 <hr style="border-style:dashed;color:#C0C0C0;position:relative;top:15px;"  SIZE=1/>
       </el-form>
-      </div> </vue-scroll><span style="position:relative;top:20px">{{this.rid}}
+      </div> </vue-scroll><span style="position:relative;top:20px">
       <!-- <span>{{form.money}}、{{form.typeRadio}}、{{form.bookLabel}}、{{form.bookData}}、{{form.remark}}、{{form.bookTags}}</span> -->
       <el-tooltip effect="light" content="保存修改" placement="bottom-start" v-if="isShowAddRecord==0">
         <el-button type="primary" size="small" circle  @click="updateRecord">
@@ -436,6 +440,62 @@
         v-if="item.isPrivate==0&&item.username!=username" @click="setActiveItem(i);bookChangeVisible=false">{{item.name}}</el-tag>
       </div>
     </el-dialog>
+
+
+   <div class="step-box" v-if="step>0">
+      <div id="mainapp" style="background: transparent;padding: 3%;border: none;position: relative;">
+        
+        <div style="flex: 1;border: 1px solid pink;margin: 1% 2% 2.5% 2.5%;position: relative;color: pink;" 
+        v-bind:style="{'visibility': step>5?'visible':'hidden'}">
+          <div style="font-size: 1.5rem;font-weight: bold;position: absolute;left:4%;top:6%;white-space: nowrap;">
+            <i class="el-icon-info" style="margin-right: 2%;"></i>在这里可以查看和筛选账本
+          </div>
+          <div style="font-size: 1.2rem;position: absolute;left:10%;top:15%;white-space: nowrap;width: 80%;white-space:pre-wrap;" >
+            <i class="el-icon-warning-outline" style="margin-right: 2%;"></i>共享账本：共享者同时只能邀请一名用户，且成功共享后不可更改协作者<br/>
+          </div>
+          <div style="font-size: 1.2rem;position: absolute;left:10%;top:26%;white-space: nowrap;width: 80%;white-space:pre-wrap;" >
+            <i class="el-icon-warning-outline" style="margin-right: 2%;"></i>协作者只能向账本内添加账单，不能对账本内的账单进行修改和删除操作<br/>
+            <br/><el-button type="danger" style="margin-top: 8%;" plain  @click="updateStep(0,0)">留在此页</el-button>
+            <el-button type="danger" style="margin-top: 8%;"   @click="updateStep(0,0);changeToBooking()">去记账</el-button>
+          </div>
+        </div>
+        <div style="flex: 1;border: 1px solid pink;;margin: 1% 2.5% 2.5% 1.5%;color: pink;position: relative;"
+          v-bind:style="{'visibility': step!=6? 'visible':'hidden' }">
+          <div style="font-size: 1.5rem;font-weight: bold;position: absolute;right: -12%;top:4%;white-space: nowrap;">
+            <i class="el-icon-info" style="margin-right: 2%;"></i>在这里可以添加账本
+            <br/><el-button type="danger" style="margin-top: 8%;" plain v-if="step==1" @click="changeStep(2)">开启手账本之旅</el-button>
+            <el-popconfirm
+                   confirm-button-text='本次跳过，下次再弹出'
+                        cancel-button-text='忽略，以后不再弹出'
+                        title="请选择跳过方式："
+                        @confirm="updateStep(2,0)"
+                        @cancel="updateStep(0,0)"
+                        icon-color="pink"
+                        v-if="step==1"
+                  >
+              <el-button type="success" slot="reference" style="margin-top: 8%;margin-left: 5%;" plain  size="mini" >跳过</el-button>
+            </el-popconfirm>
+            
+          </div>
+          <div style="font-size: 1.2rem;position: absolute;left:35%;top:15%;white-space: nowrap;" v-if="step==2">
+            <i class="el-icon-back" style="margin-right: 2%;"></i>输入账本名称，如海边之旅，<br/>长度限制在10个字符
+            <br/><el-button type="danger" size="mini" style="margin-top: 6%;" plain @click="changeStep(3)">下一步</el-button>
+          </div>
+          <div style="font-size: 1.2rem;position: absolute;left:35%;top:26%;white-space: nowrap;" v-if="step==3">
+            <i class="el-icon-back" style="margin-right: 2%;"></i>选择账本类型，选中后不可修改
+            <br/><el-button type="danger" size="mini" style="margin-top: 6%;" plain @click="changeStep(4)">下一步</el-button>
+          </div>
+          <div style="font-size: 1.2rem;position: absolute;left:30%;top:36%;white-space: nowrap;" v-if="step==4">
+            <i class="el-icon-back" style="margin-right: 2%;"></i>输入备注，长度限制在30个字符，<br/>可不填
+            <br/><el-button type="danger" size="mini" style="margin-top: 6%;" plain @click="changeStep(5);book.isprivate='共享'">下一步</el-button>
+          </div>
+          <div style="font-size: 1.2rem;position: absolute;left:30%;top:48%;white-space: nowrap;" v-if="step==5">
+            <i class="el-icon-back" style="margin-right: 2%;"></i>共享账本：创建时必须输入协作用户的昵称
+            <br/><el-button type="danger" size="mini" style="margin-top: 6%;" plain @click="changeStep(6)">下一步</el-button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -456,6 +516,7 @@ export default {
         labels:[''],
         bookIndex:0,
         recordIndex:0,
+        step:0,
 
         inviteVisible:false,
         invitedVisible:false,
@@ -585,6 +646,15 @@ export default {
       }
   },
   computed: {
+    totalMoney: function () {
+            let money=0;
+            for(let i=0;i<this.mybook.length;i++){
+              if(this.mybook[i].isIncome=="支"){
+                money+=this.mybook[i].money;
+              }
+            }
+            return money.toFixed(2);
+    },
     isPrivate:function(){
       return this.book.isprivate=='共享'? true:false;
     },
@@ -657,7 +727,7 @@ export default {
        this.book.name='';
        this.book.isprivate='个人';
        this.book.remark='';
-       this.username='';
+       this.book.username='';
      },
      showBookInviteRecord(id,name){ 
         const mydata = {
@@ -681,6 +751,7 @@ export default {
         })
      },
      getAllInfo(){
+      this.step=sessionStorage.getItem('userstep')==2? 1:0;
         //获取当前日期
         let year = new Date().getFullYear();
         let month =new Date().getMonth() + 1 < 10? "0" + (new Date().getMonth() + 1): new Date().getMonth() + 1;
@@ -726,7 +797,8 @@ export default {
       	  })
 				.then( res => {
           this.books=res.data;
-          this.getRecordByBook(0);
+          if(this.books.length>0)
+            this.getRecordByBook(0);
 				})
       },
       //获取所有邀请信息
@@ -793,6 +865,10 @@ export default {
           this.showMessage("请输入被邀请人昵称！");
           return;
         }
+        if(this.book.username==this.username){
+          this.showMessage("不能邀请自己！");
+          return;
+        }
         const mydata = {
         	userid: this.userid*1,
           name:this.book.name,
@@ -814,6 +890,7 @@ export default {
           }
           else{
             this.updateInput();
+            this.form.booksTags.push(this.book.name);
             setTimeout(()=>{
               this.getAllBooks();
             },500) 
@@ -965,6 +1042,7 @@ export default {
               for(let k=0;k<showBooks.length;k++){
                 if(showBooks[k]==this.form.booksTags[j]){
                   this.form.booksTags.splice(j,1);
+                  j--;
                   continue;
                 }
               }
@@ -972,8 +1050,30 @@ export default {
 
             this.form.bookTags=[];
             this.form.bookTags=showBooks;
+
             return;
           }
+        }
+      },
+
+      changeStep(val){
+        this.step=val;
+      },
+
+      updateStep(val,val2){
+        this.changeStep(0);
+        const mydata = {
+        	  username: this.username,
+            step:val
+      	}
+        this.axios({
+        	    method: 'post',
+        	    url: '/api/user/update/step/',
+              data: Qs.stringify(mydata)
+      	})
+        sessionStorage.setItem('userstep',val2);
+        if(val2==2){
+          this.$emit("changeComponent1Data", "bills",true);
         }
       },
       updateRecord(){
@@ -1026,6 +1126,14 @@ export default {
       setActiveItem(index){
         this.$refs.carousel.setActiveItem(index);
       },
+      setActiveItem2(val){
+        for(let i=0;i<this.books.length;i++){
+          if(this.books[i].name==val){
+            this.setActiveItem(i);
+            return;
+          }
+        }
+      },
       updateBook(id){
         this.isShowUpdateBook=id;
         this.isShowAddBook=0;
@@ -1056,6 +1164,9 @@ export default {
                 this.invitedRecord[i].status=status;
             }
 				})
+      },
+      changeToBooking(){
+        this.$emit("changeComponent1Data", "booking",true);
       },
       addRecord(){
         let regs=/^(\d+)(\.\d+)?$/;
@@ -1109,11 +1220,24 @@ export default {
             else{
               for(let i=0;i<this.books.length;i++){
                 if(this.books[i].id==this.isShowUpdateBook){
+                  
+                  let index=this.form.booksTags.indexOf(this.books[i].name);
+                  if(index>=0){
+                     this.form.booksTags.splice(index,1);
+                     this.form.booksTags.push(this.book.name);
+                   }
+                   index=this.form.bookTags.indexOf(this.books[i].name)
+                   if(index>=0){
+                     this.form.bookTags.splice(index,1);
+                     this.form.bookTags.push(this.book.name);
+                   }
+
                   this.books[i].name=this.book.name;
                   this.books[i].description=this.book.remark;
                   break;
                 }
               }
+              this.getRecordByBook(this.bookIndex);
               this.showMessage("修改成功！",1);
             }
 				  })
@@ -1345,6 +1469,15 @@ export default {
     top:8px;
   }
 
-  
+  .step-box{
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  z-index: 2;
+}
+
 ::-webkit-scrollbar { display: none; }
 </style>
